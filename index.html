@@ -79,15 +79,11 @@
   }
   .controls-top {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr 260px;
     gap: 10px;
     align-items: center;
   }
   @media (max-width: 720px) {
-    .controls-top { grid-template-columns: 1fr 1fr; }
-    .search { grid-column: 1 / -1; }
-  }
-  @media (max-width: 420px) {
     .controls-top { grid-template-columns: 1fr; }
   }
 
@@ -267,6 +263,33 @@
   }
   .badge.nostock { top: 8px; left: 8px; background: rgba(26,35,50,.85); color: #fff; }
   .badge.sale    { top: 8px; right: 8px; background: var(--sale); color: #fff; }
+  .origin-flag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 14px;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .origin-flag .name {
+    font-size: 10px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 640px) {
+    .origin-flag { padding: 2px 6px; font-size: 13px; }
+    .origin-flag .name { display: none; }
+  }
   .card-body {
     padding: 12px 14px 14px;
     display: flex;
@@ -306,6 +329,13 @@
   .price-now { font-size: 18px; font-weight: 700; }
   .price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; }
   .price-empty { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  .price-unit {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    margin-top: -2px;
+  }
+  .price-unit.kg { color: var(--green-dark); font-weight: 600; }
   .card-actions {
     display: flex;
     align-items: center;
@@ -672,10 +702,6 @@
         <select id="cat" aria-label="Categoría">
           <option value="">Todas las categorías</option>
         </select>
-        <label class="toggle">
-          <input type="checkbox" id="stock" checked>
-          Solo con stock
-        </label>
       </div>
       <div class="sort-pills" role="tablist" aria-label="Ordenar">
         <button class="pill active" data-sort="default" role="tab" aria-selected="true">Relevantes</button>
@@ -778,11 +804,10 @@
   function applyFilters() {
     const q = normalize($("q").value.trim());
     const cat = $("cat").value;
-    const onlyStock = $("stock").checked;
     const sort = activeSort();
 
     filtered = ALL.filter(p => {
-      if (onlyStock && !p.s) return false;
+      if (!p.s) return false;
       if (cat && !(p.c || []).includes(cat)) return false;
       if (q) {
         const hay = normalize(p.n) + " " + normalize((p.c || []).join(" "));
@@ -813,7 +838,7 @@
   }
 
   function updateClearVisibility() {
-    const active = $("q").value.trim() !== "" || $("cat").value !== "" || !$("stock").checked;
+    const active = $("q").value.trim() !== "" || $("cat").value !== "" || activeSort() !== "default";
     $("clear").hidden = !active;
   }
 
@@ -825,6 +850,36 @@
     return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
 
+  function unitLabel(un) {
+    if (!un) return "";
+    return un.toUpperCase() === "KG" ? "por kg" : "por unidad";
+  }
+  function unitShort(un) {
+    if (!un) return "";
+    return un.toUpperCase() === "KG" ? "kg" : "unidad";
+  }
+
+  // Mapa país (como lo devuelve WooCommerce) → bandera emoji + abreviatura
+  const FLAGS = {
+    "ARGENTINA": ["🇦🇷", "ARG"], "BRASIL": ["🇧🇷", "BRA"], "PERU": ["🇵🇪", "PER"],
+    "CHINA": ["🇨🇳", "CHN"], "INDIA": ["🇮🇳", "IND"], "TAILANDIA": ["🇹🇭", "THA"],
+    "CHILE": ["🇨🇱", "CHL"], "EGIPTO": ["🇪🇬", "EGY"], "TURQUIA": ["🇹🇷", "TUR"],
+    "ESPAÑA": ["🇪🇸", "ESP"], "PARAGUAY": ["🇵🇾", "PAR"], "FILIPINAS": ["🇵🇭", "PHL"],
+    "PAKISTAN": ["🇵🇰", "PAK"], "SRI LANKA": ["🇱🇰", "LKA"], "MARRUECOS": ["🇲🇦", "MAR"],
+    "USA": ["🇺🇸", "USA"], "BOLIVIA": ["🇧🇴", "BOL"], "VIETNAM": ["🇻🇳", "VNM"],
+    "ARGELIA": ["🇩🇿", "DZA"], "FRANCIA": ["🇫🇷", "FRA"], "URUGUAY": ["🇺🇾", "URU"],
+    "INDONESIA": ["🇮🇩", "IDN"], "POLONIA": ["🇵🇱", "POL"], "ALBANIA": ["🇦🇱", "ALB"],
+    "MEXICO": ["🇲🇽", "MEX"], "SUDAFRICA": ["🇿🇦", "ZAF"], "BULGARIA": ["🇧🇬", "BUL"],
+    "ECUADOR": ["🇪🇨", "ECU"], "MALASIA": ["🇲🇾", "MYS"], "CANADA": ["🇨🇦", "CAN"],
+    "IRAN": ["🇮🇷", "IRN"], "ISRAEL": ["🇮🇱", "ISR"],
+  };
+  function flagHtml(origen) {
+    if (!origen) return "";
+    const key = origen.toUpperCase();
+    const [flag, abbr] = FLAGS[key] || ["🌐", key.slice(0, 3)];
+    return `<span class="origin-flag" title="${escapeHtml(origen)}">${flag}<span class="name">${abbr}</span></span>`;
+  }
+
   function cardHTML(p) {
     const inCart = cart.has(p.id);
     const qty = inCart ? cart.get(p.id).qty : 0;
@@ -833,11 +888,14 @@
           ? `<span class="price-now">${fmt.format(p.po)}</span><span class="price-old">${fmt.format(p.pr)}</span>`
           : `<span class="price-now">${fmt.format(p.p)}</span>`)
       : `<span class="price-empty">Consultar</span>`;
+    const isKg = (p.un || "").toUpperCase() === "KG";
+    const unitHtml = p.un
+      ? `<div class="price-unit ${isKg ? "kg" : ""}">${unitLabel(p.un)}</div>`
+      : "";
     const cat = (p.c && p.c[0]) ? p.c[0] : "";
     const img = p.i
       ? `<img src="${p.i}" alt="${escapeHtml(p.n)}" loading="lazy" decoding="async">`
       : `<div class="no-img">sin imagen</div>`;
-    const nostock = p.s ? "" : `<span class="badge nostock">SIN STOCK</span>`;
     const sale = (p.po != null) ? `<span class="badge sale">OFERTA</span>` : "";
     const noPrice = !p.p;
     const actions = inCart
@@ -851,11 +909,12 @@
          </button>`;
     return `
       <div class="card ${inCart ? 'in-cart' : ''}" data-id="${p.id}">
-        <div class="card-img-wrap">${img}${nostock}${sale}</div>
+        <div class="card-img-wrap">${img}${sale}</div>
         <div class="card-body">
           <p class="card-cat">${escapeHtml(cat)}</p>
           <h3 class="card-name">${escapeHtml(p.n)}</h3>
           <div class="card-price">${priceHtml}</div>
+          ${unitHtml}
           <div class="card-actions">${actions}</div>
         </div>
       </div>`;
@@ -1058,7 +1117,6 @@
   function clearAllFilters() {
     $("q").value = "";
     $("cat").value = "";
-    $("stock").checked = true;
     setActivePill("default");
     applyFilters();
   }
@@ -1066,7 +1124,6 @@
   // --- Wire up events ---
   $("q").addEventListener("input", debounce(applyFilters, 150));
   $("cat").addEventListener("change", applyFilters);
-  $("stock").addEventListener("change", applyFilters);
   document.querySelectorAll(".pill").forEach(el => {
     el.addEventListener("click", () => {
       setActivePill(el.dataset.sort);
