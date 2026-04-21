@@ -909,7 +909,7 @@
          </button>`;
     return `
       <div class="card ${inCart ? 'in-cart' : ''}" data-id="${p.id}">
-        <div class="card-img-wrap">${img}${sale}</div>
+        <div class="card-img-wrap">${img}${flagHtml(p.o)}${sale}</div>
         <div class="card-body">
           <p class="card-cat">${escapeHtml(cat)}</p>
           <h3 class="card-name">${escapeHtml(p.n)}</h3>
@@ -1052,7 +1052,7 @@
               <span class="subtotal">${fmt.format(sub)}</span>
             </div>
             <div class="cart-item-row">
-              <span class="price">${fmt.format(u)} c/u</span>
+              <span class="price">${fmt.format(u)} / ${unitShort(p.un) || "u"}</span>
               <button class="cart-item-remove" data-drawer-act="del" data-id="${p.id}">Quitar</button>
             </div>
           </div>
@@ -1083,7 +1083,8 @@
       const u = unitPrice(p);
       const sub = u * qty;
       const name = p.n.length > maxName ? p.n.slice(0, maxName - 1) + "…" : p.n.padEnd(maxName);
-      lines.push(`${name}  x${String(qty).padStart(3)}  ${fmt.format(sub)}`);
+      const unit = unitShort(p.un) || "u";
+      lines.push(`${name}  x${String(qty).padStart(3)} ${unit.padEnd(6)}  ${fmt.format(sub)}`);
     }
     lines.push("");
     lines.push(`TOTAL: ${fmt.format(cartTotal())}`);
