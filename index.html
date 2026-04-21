@@ -73,15 +73,64 @@
     font-weight: 500;
   }
   .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .controls-top {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto;
     gap: 10px;
     align-items: center;
   }
   @media (max-width: 720px) {
-    .controls { grid-template-columns: 1fr 1fr; }
+    .controls-top { grid-template-columns: 1fr 1fr; }
     .search { grid-column: 1 / -1; }
   }
+  @media (max-width: 420px) {
+    .controls-top { grid-template-columns: 1fr; }
+  }
+
+  /* --- Sort pills --- */
+  .sort-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 2px 0;
+    margin: 0 -2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sort-pills::-webkit-scrollbar { display: none; }
+  .sort-pills::before,
+  .sort-pills::after { content: ""; flex: 0 0 2px; }
+  .pill {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+  .pill:hover {
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+  .pill.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+    font-weight: 600;
+  }
+  .pill svg { flex-shrink: 0; }
   .search { position: relative; }
   .search input {
     width: 100%;
@@ -166,6 +215,12 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
   }
   .card {
     background: var(--card);
@@ -578,11 +633,26 @@
     color: var(--ink-soft);
   }
 
+  @media (max-width: 640px) {
+    .brand h1 { font-size: 17px; }
+    .card-name { font-size: 13px; min-height: 2.6em; }
+    .price-now { font-size: 16px; }
+    .card-body { padding: 10px 12px 12px; gap: 6px; }
+    .card-img-wrap img { padding: 8px; }
+    .badge { font-size: 10px; padding: 3px 6px; }
+    .add-btn { padding: 8px; font-size: 12.5px; }
+    .qty-ctl { grid-template-columns: 28px 1fr 28px; }
+    .qty-ctl button { font-size: 14px; }
+    .pill { padding: 7px 12px; font-size: 12.5px; }
+    select, .toggle { padding: 10px 12px; font-size: 13px; }
+    .search input { padding: 10px 12px 10px 36px; font-size: 14px; }
+    .search::before { left: 12px; }
+  }
   @media (max-width: 480px) {
-    .cart-fab { bottom: 16px; right: 16px; padding: 12px 16px; }
+    .cart-fab { bottom: 14px; right: 14px; padding: 11px 16px; font-size: 13px; }
     .drawer { max-width: 100%; }
-    main { padding: 16px 16px 120px; }
-    .header-inner { padding: 14px 16px; }
+    main { padding: 14px 12px 100px; }
+    .header-inner { padding: 12px 14px; gap: 10px; }
   }
 </style>
 </head>
@@ -595,23 +665,31 @@
       <div class="count" id="count">Cargando…</div>
     </div>
     <div class="controls">
-      <div class="search">
-        <input type="search" id="q" placeholder="Buscar producto…" autocomplete="off">
+      <div class="controls-top">
+        <div class="search">
+          <input type="search" id="q" placeholder="Buscar producto…" autocomplete="off">
+        </div>
+        <select id="cat" aria-label="Categoría">
+          <option value="">Todas las categorías</option>
+        </select>
+        <label class="toggle">
+          <input type="checkbox" id="stock" checked>
+          Solo con stock
+        </label>
       </div>
-      <select id="cat" aria-label="Categoría">
-        <option value="">Todas las categorías</option>
-      </select>
-      <select id="sort" aria-label="Ordenar por">
-        <option value="default">Orden original</option>
-        <option value="price-asc">Precio: menor a mayor</option>
-        <option value="price-desc">Precio: mayor a menor</option>
-        <option value="name-asc">Nombre A–Z</option>
-        <option value="name-desc">Nombre Z–A</option>
-      </select>
-      <label class="toggle">
-        <input type="checkbox" id="stock" checked>
-        Solo con stock
-      </label>
+      <div class="sort-pills" role="tablist" aria-label="Ordenar">
+        <button class="pill active" data-sort="default" role="tab" aria-selected="true">Relevantes</button>
+        <button class="pill" data-sort="price-asc" role="tab" aria-selected="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          Menor precio
+        </button>
+        <button class="pill" data-sort="price-desc" role="tab" aria-selected="false">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+          Mayor precio
+        </button>
+        <button class="pill" data-sort="name-asc" role="tab" aria-selected="false">A–Z</button>
+        <button class="pill" data-sort="name-desc" role="tab" aria-selected="false">Z–A</button>
+      </div>
     </div>
   </div>
 </header>
@@ -692,11 +770,16 @@
     }
   }
 
+  function activeSort() {
+    const el = document.querySelector(".pill.active");
+    return el ? el.dataset.sort : "default";
+  }
+
   function applyFilters() {
     const q = normalize($("q").value.trim());
     const cat = $("cat").value;
     const onlyStock = $("stock").checked;
-    const sort = $("sort").value;
+    const sort = activeSort();
 
     filtered = ALL.filter(p => {
       if (onlyStock && !p.s) return false;
@@ -964,19 +1047,32 @@
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   }
 
+  function setActivePill(sortKey) {
+    document.querySelectorAll(".pill").forEach(el => {
+      const isActive = el.dataset.sort === sortKey;
+      el.classList.toggle("active", isActive);
+      el.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+  }
+
   function clearAllFilters() {
     $("q").value = "";
     $("cat").value = "";
     $("stock").checked = true;
-    $("sort").value = "default";
+    setActivePill("default");
     applyFilters();
   }
 
   // --- Wire up events ---
   $("q").addEventListener("input", debounce(applyFilters, 150));
   $("cat").addEventListener("change", applyFilters);
-  $("sort").addEventListener("change", applyFilters);
   $("stock").addEventListener("change", applyFilters);
+  document.querySelectorAll(".pill").forEach(el => {
+    el.addEventListener("click", () => {
+      setActivePill(el.dataset.sort);
+      applyFilters();
+    });
+  });
   $("more").addEventListener("click", renderMore);
   $("clear").addEventListener("click", clearAllFilters);
   $("cartBtn").addEventListener("click", openDrawer);
