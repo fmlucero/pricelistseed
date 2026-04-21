@@ -1,0 +1,24 @@
+# === Secretos ===
+.env
+.env.example
+
+# === Scripts internos (no se suben) ===
+scrape.py
+requirements.txt
+debug_*.py
+debug_*.html
+
+# === Datos internos para diseñador ===
+data/
+
+# === Memory / configuración local de Claude ===
+memory/
+.claude/
+
+# === Python ===
+*.pyc
+__pycache__/
+
+# === OS ===
+.DS_Store
+Thumbs.db
