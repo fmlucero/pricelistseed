@@ -10,6 +10,7 @@ debug_*.html
 
 # === Datos internos para diseñador ===
 data/
+CONTEXT.md
 
 # === Memory / configuración local de Claude ===
 memory/
